@@ -2,78 +2,91 @@
   <div class="race-hud">
     <!-- Race Info Panel - Left Side -->
     <div class="race-info-panel">
-      <div class="race-info-item lap-info">
+      <!-- LAP Info -->
+      <div class="race-info-item">
         <div class="icon-container">
-          <v-icon icon="mdi-flag-checkered" class="race-icon"></v-icon>
+          <v-icon icon="mdi-flag-triangle" class="race-icon green"></v-icon>
         </div>
         <div class="info-content">
-          <span class="label">LAP</span>
-          <span class="value">{{ lapText }}</span>
-          <span class="sub-label" v-if="globalStore.activeRace.totalLaps > 0">LAST LAP</span>
+          <span class="label green">LAP</span>
+          <div class="value-row">
+            <span class="value white">{{ lapText }}</span>
+            <span class="sub-value gray">LAST LAP</span>
+          </div>
         </div>
       </div>
 
-      <div class="race-info-item time-info">
+      <!-- TOTAL Time -->
+      <div class="race-info-item">
         <div class="icon-container">
-          <v-icon icon="mdi-timer" class="race-icon"></v-icon>
+          <v-icon icon="mdi-clock-outline" class="race-icon green"></v-icon>
         </div>
         <div class="info-content">
-          <span class="label">TOTAL</span>
-          <span class="value">{{ msToHMS(globalStore.activeRace.totalTime) }}</span>
+          <span class="label green">TOTAL</span>
+          <span class="value white">{{ msToHMS(globalStore.activeRace.totalTime) }}</span>
         </div>
       </div>
 
-      <div class="race-info-item time-info">
+      <!-- CURRENT Time -->
+      <div class="race-info-item">
         <div class="icon-container">
-          <v-icon icon="mdi-timer-outline" class="race-icon"></v-icon>
+          <v-icon icon="mdi-clock-outline" class="race-icon green"></v-icon>
         </div>
         <div class="info-content">
-          <span class="label">CURRENT</span>
-          <span class="value">{{ msToHMS(globalStore.activeRace.time) }}</span>
+          <span class="label green">CURRENT</span>
+          <span class="value white">{{ msToHMS(globalStore.activeRace.time) }}</span>
         </div>
       </div>
 
-      <div class="race-info-item time-info">
+      <!-- BEST Time -->
+      <div class="race-info-item">
         <div class="icon-container">
-          <v-icon icon="mdi-star" class="race-icon"></v-icon>
+          <v-icon icon="mdi-star-outline" class="race-icon green"></v-icon>
         </div>
         <div class="info-content">
-          <span class="label">BEST</span>
-          <span class="value">{{ msToHMS(globalStore.activeRace.bestLap) }}</span>
+          <span class="label green">BEST</span>
+          <span class="value white">{{ msToHMS(globalStore.activeRace.bestLap) }}</span>
         </div>
       </div>
 
-      <div class="race-info-item checkpoint-info">
+      <!-- CHECKPOINT -->
+      <div class="race-info-item">
         <div class="icon-container">
-          <v-icon icon="mdi-map-marker" class="race-icon"></v-icon>
+          <v-icon icon="mdi-map-marker-outline" class="race-icon green"></v-icon>
         </div>
         <div class="info-content">
-          <span class="label">CHECKPOINT</span>
-          <span class="value">{{ globalStore.activeRace.currentCheckpoint }}/{{ globalStore.activeRace.totalCheckpoints }}</span>
+          <span class="label green">CHECKPOINT</span>
+          <span class="value white">{{ globalStore.activeRace.currentCheckpoint }}/{{ globalStore.activeRace.totalCheckpoints }}</span>
         </div>
       </div>
     </div>
 
     <!-- Leaderboard Panel - Right Side -->
     <div class="leaderboard-panel">
+      <!-- Top racers -->
       <div 
-        v-for="(racer, index) in displayRacers" 
+        v-for="(racer, index) in topRacers" 
         :key="racer.RacerSource"
         class="leaderboard-item"
-        :class="{ 
-          'current-player': index === globalStore.activeRace.position - 1,
-          'first-place': index === 0,
-          'second-place': index === 1,
-          'third-place': index === 2
-        }"
+        :class="getLeaderboardClass(index, racer)"
       >
         <div class="position-number">{{ index + 1 }}</div>
         <div class="racer-name">{{ racer.RacerName }}</div>
-        <div class="time-difference" v-if="index > 0 && !racer.Finished">
-          {{ getTimeDifference(displayRacers[0], racer) }}
+        <div class="time-difference">
+          {{ index === 0 ? '' : getTimeDifference(topRacers[0], racer) }}
         </div>
-        <div class="time-difference finished" v-else-if="racer.Finished">
-          FINISHED
+      </div>
+
+      <!-- Player position if not in top display -->
+      <div 
+        v-if="shouldShowPlayerSeparately"
+        class="leaderboard-item player-separate"
+        :class="getLeaderboardClass(playerPosition, playerRacer)"
+      >
+        <div class="position-number">{{ playerPosition + 1 }}</div>
+        <div class="racer-name">{{ playerRacer.RacerName }} <span class="me-indicator">ME</span></div>
+        <div class="time-difference">
+          {{ getTimeDifference(topRacers[0], playerRacer) }}
         </div>
       </div>
     </div>
@@ -86,7 +99,6 @@
     <!-- Ghosted Indicator -->
     <div class="ghosted-indicator" v-if="globalStore.activeRace.ghosted">
       <v-icon icon="mdi-ghost" class="ghost-icon"></v-icon>
-      <span>GHOSTED</span>
     </div>
   </div>
 </template>
@@ -106,48 +118,64 @@ const lapText = computed(() => {
   return `${globalStore.activeRace.currentLap}/${globalStore.activeRace.totalLaps}`;
 });
 
-const displayRacers = computed(() => {
-  const maxDisplay = 8;
-  const racers = globalStore.activeRace.positions || [];
-  const playerPosition = globalStore.activeRace.position - 1;
-  
-  if (racers.length <= maxDisplay) {
-    return racers;
-  }
-  
-  // If player is in top positions, show top racers
-  if (playerPosition < maxDisplay - 2) {
-    return racers.slice(0, maxDisplay);
-  }
-  
-  // If player is further down, show top 3 + player area
-  const topRacers = racers.slice(0, 3);
-  const playerArea = racers.slice(playerPosition - 1, playerPosition + 2);
-  
-  return [...topRacers, ...playerArea].filter((racer, index, arr) => 
-    arr.findIndex(r => r.RacerSource === racer.RacerSource) === index
-  );
+const maxDisplay = computed(() => 
+  globalStore.baseData?.data?.hudSettings?.maxPositions || 5
+);
+
+const playerPosition = computed(() => {
+  const pos = globalStore.activeRace.position;
+  return pos && pos > 0 ? pos - 1 : -1;
 });
 
+const playerRacer = computed(() => {
+  const racers = globalStore.activeRace.positions || [];
+  return racers[playerPosition.value];
+});
+
+const topRacers = computed(() => {
+  const racers = globalStore.activeRace.positions || [];
+  return racers.slice(0, maxDisplay.value);
+});
+
+const shouldShowPlayerSeparately = computed(() => {
+  return playerPosition.value >= maxDisplay.value && playerRacer.value;
+});
+
+const getLeaderboardClass = (index: number, racer: ActiveRacer) => {
+  const classes = [];
+  
+  // Position-based colors
+  if (index === 0) classes.push('first-place');
+  else if (index === 1) classes.push('second-place');
+  else if (index === 2) classes.push('third-place');
+  
+  // Player indicator
+  if (racer && racer.RacerSource === playerRacer.value?.RacerSource) {
+    classes.push('current-player');
+  }
+  
+  return classes.join(' ');
+};
+
 const formatTimeDifference = (timeDiffMs: number): string => {
-  if (timeDiffMs === 0) return "-00:00.000";
+  if (timeDiffMs === 0) return "";
   
-  const isAhead = timeDiffMs > 0;
   const absoluteDiffSeconds = Math.abs(timeDiffMs) / 1000;
-  
   const minutes = Math.floor(absoluteDiffSeconds / 60);
   const seconds = absoluteDiffSeconds % 60;
   
   const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toFixed(3).padStart(6, '0')}`;
-  return isAhead ? `-${formattedTime}` : `+${formattedTime}`;
+  return `-${formattedTime}`;
 };
 
 const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
+  if (!leader || !racer) return "";
+  
   const leaderCheckpoints = leader.CheckpointTimes?.length || 0;
   const racerCheckpoints = racer.CheckpointTimes?.length || 0;
 
   if (leaderCheckpoints === 0 || racerCheckpoints === 0) {
-    return "-00:00.000";
+    return "";
   }
 
   const lastCommonCheckpoint = Math.min(leaderCheckpoints, racerCheckpoints) - 1;
@@ -172,37 +200,40 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
 
 .race-info-panel {
   position: absolute;
-  top: 60px;
+  top: 80px;
   left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   z-index: 1001;
 }
 
 .race-info-item {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.75);
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
   padding: 8px 12px;
-  min-width: 180px;
-  border-left: 3px solid #9CCC65;
-  backdrop-filter: blur(4px);
+  min-width: 200px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .icon-container {
-  margin-right: 10px;
+  margin-right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .race-icon {
-  color: #9CCC65;
-  font-size: 18px;
+  font-size: 16px;
+  
+  &.green {
+    color: #8BC34A;
+  }
 }
 
 .info-content {
@@ -211,83 +242,104 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
   flex: 1;
 }
 
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .label {
   font-size: 11px;
   font-weight: 600;
-  color: #9CCC65;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  
+  &.green {
+    color: #8BC34A;
+  }
 }
 
 .value {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #FFFFFF;
   line-height: 1;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+  
+  &.white {
+    color: #FFFFFF;
+  }
 }
 
-.sub-label {
+.sub-value {
   font-size: 9px;
-  color: #CCCCCC;
+  font-weight: 500;
   text-transform: uppercase;
-  margin-top: 2px;
-  line-height: 1;
+  letter-spacing: 0.5px;
+  
+  &.gray {
+    color: #999999;
+  }
 }
 
 .leaderboard-panel {
   position: absolute;
-  top: 60px;
+  top: 80px;
   right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   z-index: 1001;
-  min-width: 280px;
+  min-width: 300px;
 }
 
 .leaderboard-item {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.75);
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
   padding: 8px 12px;
-  backdrop-filter: blur(4px);
-  border-left: 3px solid #666666;
-  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  min-height: 40px;
 }
 
 .leaderboard-item.first-place {
-  border-left-color: #FFD700;
-  background: rgba(255, 215, 0, 0.1);
+  background: rgba(139, 195, 74, 0.2);
+  border-color: #8BC34A;
 }
 
 .leaderboard-item.second-place {
-  border-left-color: #C0C0C0;
-  background: rgba(192, 192, 192, 0.1);
+  background: rgba(255, 193, 7, 0.2);
+  border-color: #FFC107;
 }
 
 .leaderboard-item.third-place {
-  border-left-color: #CD7F32;
-  background: rgba(205, 127, 50, 0.1);
+  background: rgba(255, 152, 0, 0.2);
+  border-color: #FF9800;
 }
 
 .leaderboard-item.current-player {
-  border-left-color: #FF5722;
-  background: rgba(255, 87, 34, 0.15);
-  box-shadow: 0 0 10px rgba(255, 87, 34, 0.3);
+  background: rgba(244, 67, 54, 0.3);
+  border-color: #F44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+}
+
+.leaderboard-item.player-separate {
+  margin-top: 8px;
+  border-top: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .position-number {
   font-size: 16px;
   font-weight: 700;
   color: #FFFFFF;
-  min-width: 24px;
+  min-width: 20px;
   text-align: center;
   margin-right: 12px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .racer-name {
@@ -297,24 +349,32 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
   color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.me-indicator {
+  font-size: 10px;
+  font-weight: 700;
+  color: #F44336;
+  background: rgba(244, 67, 54, 0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #F44336;
 }
 
 .time-difference {
   font-size: 12px;
   font-weight: 600;
-  color: #FF5722;
+  color: #FFFFFF;
   text-align: right;
-  min-width: 80px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.time-difference.finished {
-  color: #4CAF50;
-  font-size: 11px;
+  min-width: 90px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .track-name {
@@ -322,16 +382,17 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 1px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  background: rgba(0, 0, 0, 0.6);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.7);
   padding: 8px 16px;
-  border-radius: 6px;
-  backdrop-filter: blur(4px);
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ghosted-indicator {
@@ -340,29 +401,29 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
   right: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   background: rgba(156, 39, 176, 0.9);
   color: #FFFFFF;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 8px;
+  border-radius: 50%;
   backdrop-filter: blur(4px);
   animation: pulse 2s infinite;
+  width: 40px;
+  height: 40px;
 }
 
 .ghost-icon {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
     opacity: 0.7;
+    transform: scale(1.1);
   }
 }
 
@@ -370,53 +431,46 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
 @media (max-width: 1200px) {
   .race-info-panel {
     left: 15px;
-    top: 50px;
+    top: 70px;
   }
   
   .leaderboard-panel {
     right: 15px;
-    top: 50px;
-    min-width: 250px;
+    top: 70px;
+    min-width: 280px;
   }
   
   .race-info-item {
-    min-width: 160px;
+    min-width: 180px;
     padding: 6px 10px;
-  }
-  
-  .value {
-    font-size: 14px;
-  }
-  
-  .label {
-    font-size: 10px;
   }
 }
 
 @media (max-width: 768px) {
   .race-info-panel {
     left: 10px;
-    top: 40px;
+    top: 60px;
   }
   
   .leaderboard-panel {
     right: 10px;
-    top: 40px;
-    min-width: 220px;
+    top: 60px;
+    min-width: 250px;
   }
   
   .track-name {
-    font-size: 16px;
+    font-size: 14px;
     top: 15px;
   }
   
   .race-info-item {
-    min-width: 140px;
+    min-width: 160px;
     padding: 6px 8px;
   }
   
   .leaderboard-item {
     padding: 6px 8px;
+    min-height: 36px;
   }
   
   .racer-name {
@@ -425,7 +479,7 @@ const getTimeDifference = (leader: ActiveRacer, racer: ActiveRacer): string => {
   
   .time-difference {
     font-size: 11px;
-    min-width: 70px;
+    min-width: 80px;
   }
 }
 </style>

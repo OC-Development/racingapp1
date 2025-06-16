@@ -1,0 +1,247 @@
+// Colors
+$primary-color: #00D1F5;
+$primary-color-light: #33def7;
+$primary-color-dark: #00aacc;
+$secondary-color: #1E2A3B;
+$secondary-color-light: #2D3F59;
+$secondary-color-dark: #0A1929;
+$positive-color: #4CAF50;
+$negative-color: #FF5252;
+$hud-background: rgba(10, 25, 41, 0.9);
+$hud-background-light: rgba(45, 63, 89, 0.8);
+
+// Base colors
+$background-color: #050B13;
+$background-color-lighter: #0A1929;
+$background-color-even-lighter: #1E2A3B;
+$background-color-dark: #030710;
+$background-color-inv: #ffffff;
+$background-color-inv-dark: #f3f3f3;
+$background-color-topbar: #0A1929;
+$background-color-sidebar: #0A1929;
+$background: #050B13;
+
+// Effects
+$shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+$glow: 0 0 15px rgba(0, 209, 245, 0.3);
+$card-border: 1px solid rgba(0, 209, 245, 0.15);
+
+// Text
+$text-color: #ffffff;
+$text-color-inv: #202020;
+$text-color-disabled: #6B7280;
+$accent-color: #00D1F5;
+
+// Layout
+$border-radius: 8px;
+$border: 1px solid rgba(255, 255, 255, 0.1);
+$margin: 10px;
+
+// Cards
+.v-card {
+  background: linear-gradient(180deg, rgba(30, 42, 59, 0.9) 0%, rgba(10, 25, 41, 0.9) 100%) !important;
+  border: $card-border !important;
+  box-shadow: $shadow;
+  transition: all 0.3s ease;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid transparent;
+    background: linear-gradient(90deg, $primary-color 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  &:hover {
+    border-color: rgba(0, 209, 245, 0.3) !important;
+    // box-shadow: $glow;
+
+    &::before {
+      opacity: 0.1;
+    }
+  }
+
+  .v-card-title {
+    color: $text-color;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 20px;
+    border-bottom: 1px solid rgba(0, 209, 245, 0.1);
+  }
+
+  .v-card-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    padding: 16px 20px;
+  }
+
+  .v-card-text {
+    color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+  }
+
+  .v-card-actions {
+    padding: 16px 20px;
+    gap: 12px;
+    border-top: 1px solid rgba(0, 209, 245, 0.1);
+  }
+}
+
+// Buttons
+.v-btn {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  &.v-btn--variant-flat {
+    background: linear-gradient(90deg, $primary-color-dark 0%, $primary-color 100%) !important;
+    color: $background-color !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background: linear-gradient(90deg, $primary-color 0%, $primary-color-light 100%) !important;
+    //   box-shadow: $glow;
+    }
+  }
+
+  &.v-btn--variant-outlined {
+    border: 1px solid rgba(0, 209, 245, 0.5) !important;
+    color: $primary-color !important;
+
+    &:hover {
+      background: rgba(0, 209, 245, 0.15) !important;
+    //   box-shadow: $glow;
+    }
+  }
+
+  &.v-btn--variant-text {
+    color: rgba(255, 255, 255, 0.9) !important;
+
+    &:hover {
+      color: $primary-color !important;
+      text-shadow: 0 0 10px rgba(0, 209, 245, 0.5);
+    }
+  }
+}
+
+// Inputs
+.v-text-field {
+  .v-field__input {
+    background: rgba(10, 25, 41, 0.8) !important;
+    border: 1px solid rgba(0, 209, 245, 0.15) !important;
+    border-radius: 4px;
+    color: $text-color !important;
+
+    &:focus {
+      border-color: rgba(0, 209, 245, 0.4) !important;
+    //   box-shadow: $glow;
+    }
+  }
+
+  .v-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Selects
+.v-select {
+  .v-field__input {
+    background: rgba(10, 25, 41, 0.8) !important;
+    border: 1px solid rgba(0, 209, 245, 0.15) !important;
+    border-radius: 4px;
+
+    &:focus {
+      border-color: rgba(0, 209, 245, 0.4) !important;
+    //   box-shadow: $glow;
+    }
+  }
+}
+
+// Lists
+.v-list {
+  background: rgba(10, 25, 41, 0.925) !important;
+  border: $card-border;
+
+  .v-list-item {
+    border-radius: 4px;
+    margin: 4px;
+
+    &:hover {
+      background: rgba(0, 209, 245, 0.15) !important;
+    }
+
+    &.v-list-item--active {
+      background: rgba(0, 208, 245, 0) !important;
+      border-left: 2px solid $primary-color;
+    }
+  }
+}
+
+// Dialogs
+.v-dialog {
+  .v-card {
+    background: linear-gradient(180deg, rgba(30, 42, 59, 0.95) 0%, rgba(10, 25, 41, 0.95) 100%) !important;
+    border: $card-border;
+  }
+}
+
+// Chips
+.v-chip {
+  background: rgba(30, 42, 59, 0.8) !important;
+  border: 1px solid rgba(0, 209, 245, 0.15);
+  color: rgba(255, 255, 255, 0.9) !important;
+
+  &:hover {
+    border-color: rgba(0, 209, 245, 0.4);
+    background: rgba(30, 42, 59, 0.9) !important;
+    // box-shadow: $glow;
+  }
+}
+
+// Tables
+.v-table {
+  background: rgba(10, 25, 41, 0.6) !important;
+  border: $card-border;
+
+  .v-table__wrapper {
+    > table {
+      > thead {
+        > tr {
+          > th {
+            color: $primary-color !important;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(0, 209, 245, 0.15);
+          }
+        }
+      }
+
+      > tbody {
+        > tr {
+          &:hover {
+            background: rgba(0, 209, 245, 0.1) !important;
+          }
+
+          > td {
+            color: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(0, 209, 245, 0.1);
+          }
+        }
+      }
+    }
+  }
+}
